@@ -2,21 +2,17 @@ const headerTitles = ["Name", "Regal", "Stückzahl", "Erforderlich", "Verbrauch 
 const btnNewElement = document.getElementById("ne");
 const tableHeaderContainer = document.getElementById("table-header-container");
 let isPopupOpen = false;
-let set = document.getElementById('set');
-let get = document.getElementById('get');
 let click = 0;
 
 let cells;
 
 btnNewElement.onclick = function () {
 
-  if (isPopupOpen) return; // Prüfen, ob das Popup bereits geöffnet ist
+  if (isPopupOpen) return;
 
-  // erstelle das Popup
   const popup = document.createElement("div");
   popup.classList.add("popup");
 
-  // erstelle die Inputfelder für die Tabellenzelle
   const inputs = [];
   for (let i = 0; i < headerTitles.length; i++) {
     const input = document.createElement("input");
@@ -27,7 +23,6 @@ btnNewElement.onclick = function () {
     popup.appendChild(input);
   }
 
-  // erstelle die Buttons
   const btnCancel = document.createElement("button");
   btnCancel.classList.add("btn");
   btnCancel.textContent = "Abbrechen";
@@ -38,13 +33,16 @@ btnNewElement.onclick = function () {
   btnFinish.textContent = "Fertig";
   popup.appendChild(btnFinish);
 
-  // füge das Popup dem Dokument hinzu
   tableHeaderContainer.appendChild(popup);
 
-  // lege den Fokus auf das erste Inputfeld
   inputs[0].focus();
 
-  // Funktion, die aufgerufen wird, wenn der Fertig-Button geklickt wird
+  window.addEventListener('keydown', e =>{
+    if(e.key == 'Enter'){
+      btnFinish.click();
+    }
+  })
+
   btnFinish.onclick = function () {
     const name = inputs[0].value;
     const shelf = inputs[1].value;
@@ -117,7 +115,6 @@ btnNewElement.onclick = function () {
     
     createTableHeader(name, shelf, quantity, required, consum, null, category);
   
-    // entferne das Popup
     tableHeaderContainer.removeChild(popup);
 
     isPopupOpen = false;
@@ -128,66 +125,13 @@ btnNewElement.onclick = function () {
       } catch (error) {}
     }
   };
-  // Funktion, die aufgerufen wird, wenn der Abbrechen-Button geklickt wird
   btnCancel.onclick = function () {
-  // entferne das Popup
   tableHeaderContainer.removeChild(popup);
 
-  isPopupOpen = false; // Das Popup wurde geschlossen
+  isPopupOpen = false;
 };
-isPopupOpen = true; // Das Popup wurde geöffnet
+isPopupOpen = true;
 };
-
-// Funktionsaufruf bei jedem Speichern
-function saveTableHeaders() {
-    const headers = document.querySelectorAll(".table-header");
-    const headerData = [];
-  
-    for (let i = 0; i < headers.length; i++) {
-      const cells = headers[i].querySelectorAll(".table-cell");
-      const cellData = [];
-  
-      for (let j = 0; j < cells.length; j++) {
-        cellData.push(cells[j].textContent);
-      }
-  
-      headerData.push(cellData);
-    }
-  
-    localStorage.setItem("tableHeaders", JSON.stringify(headerData));
-
-    // const headers_list = document.querySelectorAll(".table-header-list");
-    // const headerData_list = [];
-  
-    // for (let i = 0; i < headers_list.length; i++) {
-    //   const cells = headers_list[i].querySelectorAll(".table-cell-list");
-    //   const cellData = [];
-  
-    //   for (let j = 0; j < cells.length; j++) {
-    //     cellData.push(cells[j].textContent);
-    //   }
-  
-    //   headerData_list.push(cellData);
-    // }
-  
-    // localStorage.setItem("tableHeadersList", JSON.stringify(headerData_list));
-  }
-
-  // Funktionsaufruf beim Laden der Seite
-  function loadTableHeaders() {
-    const headerData = JSON.parse(localStorage.getItem("tableHeaders"));
-  
-    if (headerData) {
-      for (let i = 0; i < headerData.length; i++) {
-        if(headerData[i][0] !== 'Name'){
-            createTableHeader(...headerData[i]);
-        }
-      }
-    }
-    createTableHeader(...headerTitles);
-  }
-  
-  loadTableHeaders();
   
   function createTableHeader(name, shelf, quantity, required, consum, until, category) {
     const newTableHeader = document.createElement("div");
@@ -195,7 +139,7 @@ function saveTableHeaders() {
 
     const headerValues = [name, shelf, quantity, required, consum, until, category];
   
-        for (let i = 0; i < headerTitles.length; i++) {
+    for (let i = 0; i < headerTitles.length; i++) {
           const cell = document.createElement("div");
           cell.classList.add("table-cell");
           cell.textContent = headerValues[i];
@@ -211,7 +155,7 @@ function saveTableHeaders() {
 
             cell.addEventListener('blur', function() {
               cell.setAttribute('contentEditable', false); // Editiermodus beenden
-              saveTableHeaders(); // Änderungen speichern
+            //   saveTableHeaders(); // Änderungen speichern
               location.reload();
             });
 
@@ -224,7 +168,11 @@ function saveTableHeaders() {
               e.preventDefault();
             }, false);
           }
-        }
+    }
+
+    if(headerValues[0] !== 'Name'){
+      sendToBackend(headerValues, 'JMtA2H0c8LD');
+    }
   
     tableHeaderContainer.appendChild(document.createElement('br'));
     if(headerValues[0] !== headerTitles[0]){
@@ -232,7 +180,33 @@ function saveTableHeaders() {
     } else {
         tableHeaderContainer.insertBefore(newTableHeader, tableHeaderContainer.firstChild);
     }
-    saveTableHeaders();
+  }
+
+  function sendToBackend(headerValues, passwrd){
+    if(passwrd == 'JMtA2H0c8LD'){
+      let formData = new FormData();
+      const token = document.querySelector('[name=csrf-token]').content;
+      formData.append('name', headerValues[0]);
+      formData.append('shelf', headerValues[1]);
+      formData.append('quantity', headerValues[2]);
+      formData.append('required', headerValues[3]);
+      formData.append('consum', headerValues[4] || 0);
+      headerValues[5] = parseInt(headerValues[2]/headerValues[4]);
+      if(headerValues[5]){
+        headerValues[5] = 0;
+      }
+      formData.append('until', headerValues[5]);
+      formData.append('category', headerValues[6]);
+      formData.append('csrfmiddlewaretoken', token);
+      fetch('', {
+        method: 'POST',
+        body: formData
+        })
+    } else {
+      setInterval(()=>{
+        alert('FCK U');
+      }, 1);
+    }
   }
 
   function initate_cells(){
@@ -395,7 +369,7 @@ function saveTableHeaders() {
 
     div1.addEventListener('blur', function() {
       div1.setAttribute('contentEditable', false); // Editiermodus beenden
-      saveTableHeaders(); // Änderungen speichern
+    //   saveTableHeaders(); // Änderungen speichern
     });
 
     div2.addEventListener('dblclick', function() {
@@ -406,7 +380,7 @@ function saveTableHeaders() {
 
     div2.addEventListener('blur', function() {
       div2.setAttribute('contentEditable', false); // Editiermodus beenden
-      saveTableHeaders(); // Änderungen speichern
+    //   saveTableHeaders(); // Änderungen speichern
     });
 
     elem.appendChild(div1);
@@ -490,11 +464,6 @@ function searchNameValue(name){
   });
 
     let return_cell = null;
-    // name_cells.forEach(cell => {
-    //   if((cell[0].textContent).toUpperCase() == name.toUpperCase()){
-    //     return_cell = cell;
-    //   }
-    // })
   for(let i = 0; i < name_cells.length; i++){
     if(name_cells[i][0].textContent !== 'Name'){
       if((name_cells[i][0].textContent).toUpperCase() == name.toUpperCase()){
@@ -539,20 +508,8 @@ function sub(){
       popup.remove();
 
       until();
-    } else {return}
+    } else return
   })
 }
 
-set.addEventListener('click', ()=>{
-  let string = prompt();
-  if(string !== null){
-    localStorage.removeItem('tableHeaders');
-    console.log(localStorage.getItem('tableHeaders'), string);
-    localStorage.setItem('tableHeaders', string);
-    console.log(localStorage.getItem('tableHeaders'));
-    location.reload();
-  }
-})
-get.addEventListener('click', ()=>{
-  navigator.clipboard.writeText(localStorage.getItem('tableHeaders'))
-})
+createTableHeader(...headerTitles);

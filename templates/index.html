@@ -4,21 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>Speisekammer</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
 
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
     <div id="top">
         <div id="btns">
-            <button id="ne" class="btn" onclick="addTableRow()">Neues Element</button>
+            <button id="ne" class="btn">Neues Element</button>
             <button id="ee" class="btn" onclick="shoppingList()">Einkaufsliste erstellen</button>
             <button id="transfer" class="btn" onclick="sub()">Neuen Verbrauch eintragen</button>
         </div>
     </div><br>
-    <div id="table-header-container">
+    <div id="table-header-container"><br>
         {% for row in all_items %}
         {% if row.name != 'Name' %}
         <div class="table-header"> <div class="table-cell">{{row.name}}</div> <div class="table-cell">{{row.shelf}}</div> <div class="table-cell">{{row.quantity}}</div> <div class="table-cell">{{row.required}}</div> <div class="table-cell">{{row.consum}}</div> <div class="table-cell">{{row.until}}</div> <div class="table-cell">{{row.category}}</div></div><br>
